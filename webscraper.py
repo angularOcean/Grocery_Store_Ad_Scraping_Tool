@@ -11,6 +11,8 @@ import time
 import bs4, requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
@@ -47,8 +49,13 @@ class groceryScraper():
         soup = bs4.BeautifulSoup(page_source, 'html.parser')
         itemname = soup.find_all(class_="w-sales-tile__product")
         itemprice = soup.find_all(class_="w-sales-tile__sale-price w-header3 w-bold-txt")
-        for elem in range(0, len(itemname)):
-            print(itemname[elem].text.strip(), itemprice[elem].text.strip())
+        saleList = []
+        for index in range(0, len(itemname)):
+            itemName = itemname[index].text.strip()
+            itemPrice = itemprice[index].text.strip()
+            saleList.append([itemName, itemPrice])
+        print(saleList)
+        return saleList
 
     def get_fredMeyer(self):
         website = self.initSelenium()
@@ -72,11 +79,53 @@ class groceryScraper():
         for elem in range(0, len(itemname)):
             print(itemname[elem].text.strip(), itemprice[elem].text.strip(), 'new line')
 
+    def get_Sprouts(self):
+        website = self.initSelenium()
+        website.get(self._sprouts['url'])
+        website.implicitly_wait(60)
+        try:
+            defaultlocationBar = website.find_element(By.ID, '#postal-input')
+            ##postal-input
+            print('found default location bar', defaultlocationBar)
+            defaultlocationBar.click()
+        except NoSuchElementException:
+            pass
+        try:
+            emptylocationBar = website.find_element(By.XPATH, '//*[@id="postal-input"]')
+            print('found empty location bar', emptylocationBar)
+            emptylocationBar.send_keys(self._zipCode)
+            #//*[@id="postal-input"]
+        except NoSuchElementException:
+            pass
+
+        try:
+            secondlocationBar = website.find_element(By.XPATH, '//*[@id="storeNavigationBtn"]/div/div[2]/h3[2]')
+            print('found second location bar', secondlocationBar)
+            secondlocationBar.click()
+        except NoSuchElementException:
+            pass
+
+        #XPATH //*[@id="store-name"]
+        #ID#store-name
+        #locationBar.click()
+        website.implicitly_wait(10)
+        iframe = website.find_elements(By.TAG_NAME, 'iframe')
+        print(iframe)
+        website.switch_to.frame(iframe[0])
+        try:
+            zipCode = website.find_element(By.ID, '#shopping-selector-search-cities')
+            zipCode.send_keys(self._zipCode)
+            print('found zipcode enter', zipCode)
+        except NoSuchElementException:
+            pass
+        time.sleep(30)
+
 
 
 testScraper = groceryScraper(98103)
 #testScraper.get_wholeFoods()
-testScraper.get_fredMeyer()
+#testScraper.get_fredMeyer()
+testScraper.get_Sprouts()
 
 # random junk
 # print(soup)
