@@ -17,6 +17,8 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 
+import re
+
 class groceryScraper():
     def __init__(self, zipCode):
         self._zipCode = zipCode
@@ -65,13 +67,13 @@ class groceryScraper():
         website.switch_to.frame(iframe[0])
         weeklyAd = website.find_element(By.XPATH, '//*[@id="other_flyer_runs"]/div/div/div/div[2]/table/tbody/tr[1]')
         weeklyAd.click()
-        time.sleep(3)
+        time.sleep(1)
         gridView = website.find_element(By.XPATH, '//*[@id="wishabi-flyerarea"]/div[2]/div/div[1]/div[3]/div/div/div[3]/div/div/div/h4')
         gridView.click()
         time.sleep(3)
 
         page_source = website.page_source
-        #print(page_source)
+        print(page_source)
 
         soup = bs4.BeautifulSoup(page_source, 'html.parser')
         itemname = soup.find_all(class_="item-name")
@@ -79,62 +81,40 @@ class groceryScraper():
         for elem in range(0, len(itemname)):
             print(itemname[elem].text.strip(), itemprice[elem].text.strip(), 'new line')
 
+
     def get_Sprouts(self):
         website = self.initSelenium()
-        website.get(self._sprouts['url'])
-        website.implicitly_wait(60)
-        try:
-            defaultlocationBar = website.find_element(By.ID, '#postal-input')
-            ##postal-input
-            print('found default location bar', defaultlocationBar)
-            defaultlocationBar.click()
-        except NoSuchElementException:
-            pass
-        try:
-            emptylocationBar = website.find_element(By.XPATH, '//*[@id="postal-input"]')
-            print('found empty location bar', emptylocationBar)
-            emptylocationBar.send_keys(self._zipCode)
-            #//*[@id="postal-input"]
-        except NoSuchElementException:
-            pass
+        website.get('https://www.sprouts.com/stores/')
+        website.implicitly_wait(20)
+        defaultlocationBar = website.find_element(By.XPATH, '//*[@id="store-map"]')
+        defaultlocationBar.click()
+        time.sleep(3)
 
-        try:
-            secondlocationBar = website.find_element(By.XPATH, '//*[@id="storeNavigationBtn"]/div/div[2]/h3[2]')
-            print('found second location bar', secondlocationBar)
-            secondlocationBar.click()
-        except NoSuchElementException:
-            pass
+        elem = website.switch_to.active_element
 
-        #XPATH //*[@id="store-name"]
-        #ID#store-name
-        #locationBar.click()
+        website.implicitly_wait(20)
+        findStore = website.find_element(By.XPATH, '//*[@id="shopping-selector-search-cities"]')
+        findStore.send_keys(self._zipCode)
+        findStore.send_keys(Keys.ENTER)
+        time.sleep(3)
+
+        select = website.find_element(By.XPATH, "//*[text() = 'Select']")
+        select.click()
         website.implicitly_wait(10)
-        iframe = website.find_elements(By.TAG_NAME, 'iframe')
-        print(iframe)
-        website.switch_to.frame(iframe[0])
-        try:
-            zipCode = website.find_element(By.ID, '#shopping-selector-search-cities')
-            zipCode.send_keys(self._zipCode)
-            print('found zipcode enter', zipCode)
-        except NoSuchElementException:
-            pass
-        time.sleep(30)
+        selectAd = website.find_element(By.XPATH, '//*[@id="post-30322"]/div/div/div[2]/div[2]/div[1]/button')
+        selectAd.click()
+        time.sleep(5)
 
+        page_source = website.page_source
+        soup = bs4.BeautifulSoup(page_source, 'html.parser')
+        item = soup.find_all('body div div div')
+        item2 = soup.findAll('button', {'class': 'inspectBut'})
 
+        for elem in range(0, len(item)):
+            print(item[elem].text.strip(), item2[elem], 'new line')
 
 testScraper = groceryScraper(98103)
 #testScraper.get_wholeFoods()
 #testScraper.get_fredMeyer()
-testScraper.get_Sprouts()
+#testScraper.get_Sprouts()
 
-# random junk
-# print(soup)
-# zipList = Select(website.find_element(By.XPATH, '//*[@id="w-store-finder__search-bar"]/wfm-search-bar/div[2]/div'))
-##w-store-finder__search-bar > wfm-search-bar > div.wfm-search-bar--list_container > div > ul > li:nth-child(1) > span
-# zipList.select_by_index(0)
-# print(zipList.page_source)
-# website.implicitly_wait(20)
-# print(website.page_source)
-# res = requests.get('https://www.wholefoodsmarket.com/sales-flyer?store-id=10103')
-# res.raise_for_status()
-# soup = bs4.BeautifulSoup(res.text, 'html.parser')
