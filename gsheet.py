@@ -16,6 +16,8 @@ gc = gspread.oauth(
 from datetime import date
 today = date.today()
 
+import time
+
 from webscraper import groceryScraper
 
 class dataBuilder():
@@ -29,16 +31,27 @@ class dataBuilder():
 
     def generateSheet(self, storeName):
         if storeName == "Whole Foods":
-            storeName = self._data.get_wholeFoods()["get"]
-        wsName = "Sales for " + storeName
-        print("Generating " + storeName + " Worksheet")
+            name = self._data.get_wholeFoods()["name"]
+            print("Retrieving Sales Data")
+            storeData = self._data.scrape_wholeFoods()
+
+
+        elif storeName == "Fred Meyer":
+            name = self._data.get_fredMeyer()["name"]
+            print("Retrieving Sales Data")
+            storeData = self._data.scrape_fredMeyer()
+
+        wsName = "Sales for " + name
+        print("Generating " + name + " Worksheet")
         self._mainFile.add_worksheet(wsName, rows="100", cols="20")
         wf = gc.open(self._mainFileName).worksheet(wsName)
-        print("Retrieving Sales Data")
-        salesData = storeName["get"]
-        count = 2
+
         print("Populating worksheet")
-        for element in salesData:
+        headerRow = ["Item Name", "Price"]
+        wf.insert_row(headerRow, 1)
+        count = 2
+        for element in storeData:
+            time.sleep(2)
             wf.insert_row(element, count)
             count += 1
 
@@ -50,7 +63,7 @@ class dataBuilder():
         salesData = self._data.get_wholeFoods()
         count = 2
         print("Populating worksheet")
-        for element in wholeFoodData:
+        for element in salesData:
             wf.insert_row(element, count)
             count += 1
 
@@ -62,24 +75,12 @@ class dataBuilder():
         salesData = self._data.get_fredMeyer()
         count = 2
         print("Populating worksheet")
-        for element in wholeFoodData:
+        for element in salesData:
             wf.insert_row(element, count)
+            time.sleep(1)
             count += 1
-'''
-def sheetBuilder(zipCode):
-    fileName = "Grocery Sales for " + str(today)
-    mainFile = gc.create(fileName)
-    wfSheet = mainFile.add_worksheet("Sales for Whole Foods", rows = "100", cols = "20")
-    wf = gc.open(fileName).worksheet("Sales for Whole Foods")
-    getData = groceryScraper(zipCode)
-    wholeFoodData = getData.get_wholeFoods()
-    count = 2
-    for element in wholeFoodData:
-        wf.insert_row(element,count)
-        count +=1
-'''
 
 
-#sheetBuilder(98103)
 testClass = dataBuilder(98103)
-testClass.wholeFoodsSheet()
+testClass.generateSheet("Whole Foods")
+testClass.generateSheet("Fred Meyer")

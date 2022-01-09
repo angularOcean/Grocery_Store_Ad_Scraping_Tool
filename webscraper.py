@@ -22,11 +22,11 @@ import re
 class groceryScraper():
     def __init__(self, zipCode):
         self._zipCode = zipCode
-        self._wholeFoods = {"url":"https://www.wholefoodsmarket.com/sales-flyer", "name": 'Whole Foods', "get": self.get_wholeFoods()}
-        self._fredMeyer = {"url":"https://www.fredmeyer.com/savings/weeklyad/", "name": "Fred Meyer", "get": self.get_fredMeyer()}
-        self._sprouts = {"url":"https://www.sprouts.com/stores/", "name": "Sprouts", "get": self.get_Sprouts()}
-        self._safeway = {"url":"https://local.safeway.com/", "name": "Safeway", "get":self.get_Safeway()}
-        self._hMart = {"url": "https://www.hmartus.com/weekly-sale-wa", "name": "H Mart", "get": self.get_hMart()}
+        self._wholeFoods = {"url":"https://www.wholefoodsmarket.com/sales-flyer", "name": 'Whole Foods'}
+        self._fredMeyer = {"url":"https://www.fredmeyer.com/savings/weeklyad/", "name": "Fred Meyer"}
+        self._sprouts = {"url":"https://www.sprouts.com/stores/", "name": "Sprouts"}
+        self._safeway = {"url":"https://local.safeway.com/", "name": "Safeway"}
+        self._hMart = {"url": "https://www.hmartus.com/weekly-sale-wa", "name": "H Mart"}
 
     def get_wholeFoods(self):
         return self._wholeFoods
@@ -102,6 +102,10 @@ class groceryScraper():
         return saleList
 
     def scrape_Safeway(self):
+        '''
+        Work in progress, selenium successfully navigates to correct store and ad but hit a wall scraping data as page source differs fom inspect element
+        :return:
+        '''
         website = self.initSelenium()
         website.get(self._safeway['url'])
         website.implicitly_wait(20)
@@ -120,6 +124,10 @@ class groceryScraper():
 
 
     def scrape_Sprouts(self):
+        '''
+        Work in progress, selenium successfully navigates to correct store and ad but hit a wall scraping data as page source differs fom inspect element
+        :return:
+        '''
         website = self.initSelenium()
         website.get(self._sprouts['url'])
         website.implicitly_wait(20)
@@ -143,6 +151,8 @@ class groceryScraper():
         time.sleep(5)
 
         page_source = website.page_source
+        inspect_page = website.execute_script("return document.documentElement.innerHTML")
+        print(inspect_page)
         soup = bs4.BeautifulSoup(page_source, 'html.parser')
         item = soup.find_all('body div div div')
         item2 = soup.findAll('button', {'class': 'inspectBut'})
@@ -156,6 +166,6 @@ class groceryScraper():
 testScraper = groceryScraper(98103)
 #testScraper.get_wholeFoods()
 #testScraper.get_fredMeyer()
-#testScraper.get_Sprouts()
-testScraper.get_Safeway()
+#testScraper.scrape_Sprouts()
+#testScraper.get_Safeway()
 
