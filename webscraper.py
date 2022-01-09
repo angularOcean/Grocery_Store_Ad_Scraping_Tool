@@ -22,11 +22,26 @@ import re
 class groceryScraper():
     def __init__(self, zipCode):
         self._zipCode = zipCode
-        self._wholeFoods = {"url":"https://www.wholefoodsmarket.com/sales-flyer"}
-        self._fredMeyer = {"url":"https://www.fredmeyer.com/savings/weeklyad/"}
-        self._sprouts = {"url":"https://www.sprouts.com/weekly-ad/"}
-        self._safeway = {"url":"https://coupons.safeway.com/weeklyad"}
-        self._hMart = {"url": "https://www.hmartus.com/weekly-sale-wa"}
+        self._wholeFoods = {"url":"https://www.wholefoodsmarket.com/sales-flyer", "name": 'Whole Foods', "get": self.get_wholeFoods()}
+        self._fredMeyer = {"url":"https://www.fredmeyer.com/savings/weeklyad/", "name": "Fred Meyer", "get": self.get_fredMeyer()}
+        self._sprouts = {"url":"https://www.sprouts.com/stores/", "name": "Sprouts", "get": self.get_Sprouts()}
+        self._safeway = {"url":"https://local.safeway.com/", "name": "Safeway", "get":self.get_Safeway()}
+        self._hMart = {"url": "https://www.hmartus.com/weekly-sale-wa", "name": "H Mart", "get": self.get_hMart()}
+
+    def get_wholeFoods(self):
+        return self._wholeFoods
+
+    def get_fredMeyer(self):
+        return self._fredMeyer
+
+    def get_sprouts(self):
+        return self._sprouts
+
+    def get_safeway(self):
+        return self._safeway
+
+    def get_hMart(self):
+        return self._hMart
 
     def initSelenium(self):
         options = webdriver.ChromeOptions()
@@ -34,7 +49,7 @@ class groceryScraper():
         driver = webdriver.Chrome(options=options)
         return driver
 
-    def get_wholeFoods(self):
+    def scrape_wholeFoods(self):
         website = self.initSelenium()
         website.get(self._wholeFoods['url'])
         zipCode = website.find_element(By.ID, 'store-finder-search-bar')
@@ -59,7 +74,7 @@ class groceryScraper():
         print(saleList)
         return saleList
 
-    def get_fredMeyer(self):
+    def scrape_fredMeyer(self):
         website = self.initSelenium()
         website.get(self._fredMeyer['url'])
         website.implicitly_wait(10)
@@ -78,21 +93,43 @@ class groceryScraper():
         soup = bs4.BeautifulSoup(page_source, 'html.parser')
         itemname = soup.find_all(class_="item-name")
         itemprice = soup.find_all(class_="item-price")
-        for elem in range(0, len(itemname)):
-            print(itemname[elem].text.strip(), itemprice[elem].text.strip(), 'new line')
+        saleList = []
+        for index in range(0, len(itemname)):
+            itemName = itemname[index].text.strip()
+            itemPrice = itemprice[index].text.strip()
+            saleList.append([itemName, itemPrice])
+        print(saleList)
+        return saleList
 
-
-    def get_Sprouts(self):
+    def scrape_Safeway(self):
         website = self.initSelenium()
-        website.get('https://www.sprouts.com/stores/')
+        website.get(self._safeway['url'])
+        website.implicitly_wait(20)
+        zipCode = website.find_element(By.XPATH, '//*[@id="q"]')
+        zipCode.send_keys(self._zipCode)
+        zipCode.send_keys(Keys.ENTER)
+        time.sleep(2)
+        optionOne = website.find_element(By.XPATH, '//*[@id="js-yl-1477"]/article/h3/a/span/span[2]')
+        optionOne.click()
+        time.sleep(3)
+        weeklyAd = website.find_element(By.XPATH, '//*[@id="main"]/div[2]/div/div[1]/div/div/div/div[2]/a[1]')
+        weeklyAd.click()
+        time.sleep(8)
+        website.get(r'https://coupons.safeway.com/weeklyad/')
+        print(website.current_url)
+
+
+    def scrape_Sprouts(self):
+        website = self.initSelenium()
+        website.get(self._sprouts['url'])
         website.implicitly_wait(20)
         defaultlocationBar = website.find_element(By.XPATH, '//*[@id="store-map"]')
         defaultlocationBar.click()
         time.sleep(3)
 
         elem = website.switch_to.active_element
-
         website.implicitly_wait(20)
+
         findStore = website.find_element(By.XPATH, '//*[@id="shopping-selector-search-cities"]')
         findStore.send_keys(self._zipCode)
         findStore.send_keys(Keys.ENTER)
@@ -113,8 +150,12 @@ class groceryScraper():
         for elem in range(0, len(item)):
             print(item[elem].text.strip(), item2[elem], 'new line')
 
+    def scrape_hMart(self):
+        pass
+
 testScraper = groceryScraper(98103)
 #testScraper.get_wholeFoods()
 #testScraper.get_fredMeyer()
 #testScraper.get_Sprouts()
+testScraper.get_Safeway()
 
