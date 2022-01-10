@@ -58,7 +58,7 @@ class dataBuilder():
         wf.insert_row(headerRow, 1)
         count = 2
         for element in storeData:
-            time.sleep(1.5)
+            time.sleep(2)
             wf.insert_row(element, count)
             count += 1
 
