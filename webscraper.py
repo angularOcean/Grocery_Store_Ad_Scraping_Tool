@@ -1,6 +1,9 @@
 '''
 Webscraper portion of code
 
+This code contains a class for a web scraper that will scrape specific grocery store for their weekly sales flyer given
+a zipcode to find the right nearest store.
+
 Resources:
 https://medium.com/ymedialabs-innovation/web-scraping-using-beautiful-soup-and-selenium-for-dynamic-page-2f8ad15efe25
 https://www.selenium.dev/documentation/
@@ -88,22 +91,40 @@ class groceryScraper():
         time.sleep(3)
 
         page_source = website.page_source
-        print(page_source)
+        #print(page_source)
 
         soup = bs4.BeautifulSoup(page_source, 'html.parser')
         itemname = soup.find_all(class_="item-name")
         itemprice = soup.find_all(class_="item-price")
         saleList = []
+        duplicateList =[]
         for index in range(0, len(itemname)):
-            itemName = itemname[index].text.strip()
-            itemPrice = itemprice[index].text.strip()
-            saleList.append([itemName, itemPrice])
+            if itemname[index] not in duplicateList:
+                duplicateList.append(itemname[index])
+                perunitmatch = re.findall('\d+\S?\s?\$', itemprice[index].text.strip())
+                if perunitmatch:
+                    perUnit = re.findall('\d+', perunitmatch[0])
+                    itemPrice = re.findall('\$\d+.\d\d', itemprice[index].text.strip())
+                    itemPrice = re.findall('\d+.\d\d', itemPrice[0])
+                    itemPrice = str(round((float(itemPrice[0])/float(perUnit[0])), 2))
+                    itemPrice = '$' + itemPrice
+                    perUnit = "1"
+                else:
+                    perUnit = "1"
+                    itemPrice = re.findall('\$\d+.\d\d', itemprice[index].text.strip())
+                    if itemPrice:
+                        itemPrice = itemPrice[0]
+
+                itemName = itemname[index].text.strip()
+                if itemPrice:
+                    saleList.append([itemName, itemPrice])
         print(saleList)
         return saleList
 
     def scrape_Safeway(self):
         '''
-        Work in progress, selenium successfully navigates to correct store and ad but hit a wall scraping data as page source differs fom inspect element
+        Work in progress, selenium successfully navigates to correct store and ad
+        but hit a wall scraping data as page source differs fom inspect element
         :return:
         '''
         website = self.initSelenium()
@@ -120,12 +141,13 @@ class groceryScraper():
         weeklyAd.click()
         time.sleep(8)
         website.get(r'https://coupons.safeway.com/weeklyad/')
-        print(website.current_url)
+        #print(website.current_url)
 
 
     def scrape_Sprouts(self):
         '''
-        Work in progress, selenium successfully navigates to correct store and ad but hit a wall scraping data as page source differs fom inspect element
+        Work in progress, selenium successfully navigates to correct store and ad
+        but hit a wall scraping data as page source differs fom inspect element
         :return:
         '''
         website = self.initSelenium()
@@ -163,9 +185,8 @@ class groceryScraper():
     def scrape_hMart(self):
         pass
 
-testScraper = groceryScraper(98103)
+#testScraper = groceryScraper(98103)
 #testScraper.get_wholeFoods()
-#testScraper.get_fredMeyer()
+#testScraper.scrape_fredMeyer()
 #testScraper.scrape_Sprouts()
 #testScraper.get_Safeway()
-
